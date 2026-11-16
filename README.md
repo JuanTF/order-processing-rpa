@@ -1,168 +1,160 @@
-# Automatización de registro de pedidos con Power Automate Desktop
+# Order Processing RPA
+### Automatización del registro de pedidos con Power Automate Desktop
 
-Proyecto RPA que procesa pedidos desde Excel y los registra en un portal web de demostración mediante Microsoft Edge. El flujo valida datos básicos, interpreta la respuesta del portal y guarda el resultado de cada pedido en el mismo archivo.
+Automatización que procesa pedidos desde Microsoft Excel y los registra en un portal web de demostración. El flujo valida datos, identifica referencias ya existentes y guarda el resultado de cada pedido en el archivo de origen.
 
-## Objetivo
+Desarrollé este proyecto para aplicar RPA a una tarea operativa habitual: trasladar información de una hoja de cálculo a un sistema web, manteniendo un registro de los pedidos procesados y de los casos que necesitan revisión.
 
-Automatizar el traslado de información de Excel a un formulario web y mantener un registro del resultado, incluyendo pedidos registrados, referencias existentes y casos que requieren revisión.
+**Tecnologías:** Power Automate Desktop · Microsoft Excel · Microsoft Edge
 
-## Herramientas
+## Contexto y objetivo
 
-- Power Automate Desktop.
-- Microsoft Excel de escritorio.
-- Microsoft Edge con la extensión de Power Automate.
-- Portal web de demostración.
+El registro manual de pedidos implica copiar información entre aplicaciones, comprobar los datos ingresados y verificar que cada operación se haya completado. Cuando existen registros repetidos o datos incorrectos, también es necesario identificar qué ocurrió antes de continuar.
+
+Este proyecto automatiza ese recorrido y centraliza los resultados en Excel. Su objetivo es reducir la intervención manual en el registro y facilitar el seguimiento de cada pedido mediante su estado, código de confirmación, observación y fecha de procesamiento.
+
+> Proyecto de portafolio desarrollado sobre un portal de demostración. Las evidencias corresponden a pruebas funcionales; no representan métricas de una operación productiva.
+
+## Funcionalidades
+
+- **Procesamiento selectivo:** trabaja con las filas cuyo estado es `Pendiente`.
+- **Validación de datos:** identifica inconsistencias, como cantidades no numéricas y precios unitarios no válidos.
+- **Registro web:** completa el formulario del portal con la información del pedido.
+- **Interpretación de resultados:** distingue entre un registro exitoso, una referencia existente y un caso que requiere revisión.
+- **Control del tiempo de espera:** registra una observación cuando no obtiene confirmación dentro del plazo previsto.
+- **Trazabilidad en Excel:** actualiza el estado, código del portal, observación y fecha de procesamiento.
+- **Resumen de ejecución:** muestra el total de pedidos nuevos, existentes y por revisar.
 
 ## Funcionamiento
 
-1. Abre Pedidos.xlsx y lee los datos usando la primera fila como encabezados.
-2. Abre el portal en Microsoft Edge.
-3. Recorre las filas y procesa únicamente las que tienen EstadoRPA igual a Pendiente.
-4. Valida referencia, cliente, cantidad y precio unitario.
-5. Si los datos superan las validaciones, limpia y completa el formulario web.
-6. Envía el pedido y espera hasta 30 segundos el texto de confirmación.
-7. Clasifica el resultado y actualiza Excel.
-8. Guarda y cierra el archivo.
-9. Muestra un resumen de la ejecución.
+1. Abre el archivo `Pedidos.xlsx` y lee los registros.
+2. Recorre las filas y selecciona los pedidos con estado `Pendiente`.
+3. Valida los datos contemplados en el flujo.
+4. Completa y envía el formulario web cuando corresponde.
+5. Interpreta la respuesta del portal o identifica la falta de confirmación.
+6. Escribe el resultado de cada pedido en Excel.
+7. Guarda el archivo y muestra el resumen del procesamiento.
 
-## Estructura de Excel
-
-Se deben conservar los nombres y el orden de las columnas.
-
-| Columna | Campo | Uso |
-|---|---|---|
-| A | Referencia | Identificador del pedido |
-| B | FechaPedido | Fecha del pedido, almacenada como fecha de Excel |
-| C | Cliente | Nombre del cliente |
-| D | Distrito | Nombre de una opción del portal |
-| E | CodigoProducto | Código del producto |
-| F | Producto | Descripción del producto |
-| G | Cantidad | Valor numérico mayor que cero |
-| H | PrecioUnitario | Valor numérico mayor que cero |
-| I | ImporteTotal | Importe calculado en Excel |
-| J | EstadoRPA | Estado de procesamiento |
-| K | CodigoPortal | Código obtenido del portal |
-| L | Observacion | Respuesta del portal o motivo de revisión |
-| M | FechaProcesamiento | Fecha y hora del procesamiento |
-
-El flujo escribe los resultados en las columnas J, K, L y M.
-La columna ImporteTotal no se utiliza para completar el formulario.
-
-## Validaciones implementadas
-
-- Referencia no vacía.
-- Cliente no vacío.
-- Cantidad no vacía, convertible a número y mayor que cero.
-- Precio unitario no vacío, convertible a número y mayor que cero.
-
-Si una fila presenta varios errores de validación, se conserva el último
-motivo detectado según el orden de las comprobaciones.
-
-## Estados
+### Estados del pedido
 
 | Estado | Significado |
-|---|---|
-| Pendiente | Fila habilitada para procesamiento |
-| Registrado | El portal confirmó un registro nuevo |
-| Ya existente | El portal informó que la referencia ya estaba registrada |
-| Revisar | Se detectaron datos inválidos, una respuesta no reconocida o un tiempo de espera agotado |
+| --- | --- |
+| `Pendiente` | Pedido disponible para ser procesado. |
+| `Registrado` | El portal confirmó el registro del pedido. |
+| `Ya existente` | El portal indicó que la referencia ya estaba registrada. |
+| `Revisar` | El pedido requiere atención por una validación, falta de confirmación u otra incidencia contemplada en el flujo. |
 
-Las filas cuyo estado no sea Pendiente se omiten.
+La identificación de referencias existentes se basa en la respuesta del portal. Esto permite distinguirlas de los pedidos registrados durante la ejecución.
 
-## Configuración y ejecución
+## Estructura del repositorio
 
-1. Colocar Pedidos.xlsx en una carpeta local.
-2. Configurar su ruta en la acción Iniciar Excel.
-3. Mantener la hoja de pedidos activa antes de guardar el archivo.
-4. Comprobar que los encabezados coincidan con los indicados.
-5. Configurar la URL del portal y verificar los elementos web capturados.
-6. Usar nombres de distrito y producto que coincidan con las opciones del portal.
-7. Marcar los pedidos por procesar como Pendiente.
-8. Guardar y cerrar Excel.
-9. Ejecutar el flujo completo desde Power Automate Desktop.
-10. Revisar el resumen y los resultados guardados en Excel.
+| Ruta | Contenido |
+| --- | --- |
+| `README.md` | Descripción del proyecto, funcionamiento y evidencias. |
+| `Pedidos.xlsx` | Archivo de pedidos y seguimiento de resultados. |
+| `Flujo/` | Archivo de texto con las acciones del flujo de Power Automate Desktop. |
+| `Evidencias/` | Capturas de los escenarios de prueba. |
+| `Respaldo/` | Archivos de respaldo del proyecto. |
 
-La selección del producto utiliza este formato:
+### Estructura de los datos
 
-CodigoProducto - Producto
+El archivo Excel reúne los datos del pedido y los campos de seguimiento:
 
-Ejemplo:
+| Grupo | Columnas |
+| --- | --- |
+| Identificación | `Referencia`, `FechaPedido` |
+| Cliente | `Cliente`, `Distrito` |
+| Producto | `CodigoProducto`, `Producto` |
+| Datos económicos | `Cantidad`, `PrecioUnitario`, `ImporteTotal` |
+| Seguimiento | `EstadoRPA`, `CodigoPortal`, `Observacion`, `FechaProcesamiento` |
 
-PROD-001 - Papel bond A4 75 g - paquete de 500 hojas
+Los campos de seguimiento permiten consultar qué ocurrió con cada pedido sin depender únicamente de los mensajes mostrados durante la ejecución.
 
-Durante la ejecución, evitar escribir o cambiar el foco de las ventanas,
-ya que varias acciones utilizan el teclado físico.
+## Evidencias de funcionamiento
 
-## Corrección y reintento
+### Registro exitoso
 
-Para un pedido con datos inválidos:
+El portal confirma la operación y devuelve un código de pedido. Al finalizar, el flujo muestra el resumen de la ejecución.
 
-1. Leer el motivo en Observacion.
-2. Corregir los datos.
-3. Conservar la referencia original.
-4. Cambiar EstadoRPA a Pendiente.
-5. Guardar y cerrar Excel.
-6. Ejecutar nuevamente.
+![Registro exitoso de pedidos](Evidencias/01-registro-exitoso.png)
 
-Si se agotó el tiempo de espera, comprobar primero el portal:
-el pedido podría haberse registrado aunque el robot no haya obtenido
-la confirmación.
+### Referencia ya existente
 
-## Pruebas realizadas
+Cuando la referencia ya está registrada, el flujo identifica la respuesta del portal y clasifica el pedido como `Ya existente`.
 
-| Caso | Resultado observado |
-|---|---|
-| Pedido nuevo con datos válidos | Registrado y código guardado |
-| Referencia existente | Ya existente y código recuperado |
-| Filas sin estado Pendiente | Omitidas, conservando sus resultados |
-| Cantidad con texto abc | Revisar con motivo descriptivo |
-| Precio unitario igual a cero | Revisar con motivo descriptivo |
-| Dos pedidos inválidos seguidos de uno válido | 2 por revisar y 1 registrado |
-| Corrección y reintento de los dos pedidos inválidos | 2 registros nuevos |
-| Tiempo de espera provocado durante una prueba | Revisar, código vacío y observación |
-| Ejecución posterior al tiempo de espera | Procesamiento normal recuperado |
+![Detección de una referencia existente](Evidencias/02-pedido-existente.png)
 
-Los contadores del resumen corresponden a la ejecución actual,
-no al total histórico del archivo.
+### Validación de datos
 
-## Evidencias
+Los pedidos con inconsistencias quedan en estado `Revisar`, acompañados de una observación que facilita su corrección. Las pruebas incluyen una cantidad no numérica y un precio unitario igual a cero.
 
-- [Registro exitoso](Evidencias/01-registro-exitoso.png)
-- [Pedido existente](Evidencias/02-pedido-existente.png)
-- [Validación de datos](Evidencias/03-validacion-datos.png)
-- [Resumen de validación](Evidencias/04-resumen-validacion.png)
-- [Pedidos corregidos](Evidencias/05-pedidos-corregidos.png)
-- [Tiempo de espera](Evidencias/06-tiempo-espera.png)
+![Validación de datos y observaciones en Excel](Evidencias/03-validacion-datos.png)
 
-## Archivos del proyecto
+### Resumen del procesamiento
 
-- Pedidos.xlsx: archivo de trabajo.
-- Flujo/RPA_Registro_Pedidos_Main.txt: acciones copiadas desde el diseñador.
-- Evidencias/: capturas de las pruebas.
-- Respaldo/: copia del Excel con resultados validados.
-- Documentacion/: documentación complementaria.
+La ejecución presenta un consolidado de pedidos registrados, referencias existentes y casos pendientes de revisión.
 
-El archivo de texto debe conservar su sección de elementos de interfaz.
-No equivale a un paquete de solución exportado; al reutilizarlo se deben
-verificar las acciones, los elementos web y la configuración del entorno.
+![Resumen de la ejecución](Evidencias/04-resumen-validacion.png)
 
-## Alcance y limitaciones
+### Corrección y reprocesamiento
 
-- Proyecto probado en un portal de demostración.
-- La detección de duplicados depende de la respuesta del portal.
-- No incluye ejecución desatendida ni programación automática.
-- No valida previamente la fecha ni la existencia de distrito y producto
-  en el catálogo.
-- No comprueba que la cantidad sea un número entero.
-- Las comprobaciones de campos vacíos no incluyen una limpieza explícita
-  de espacios.
-- Maneja errores de conversión numérica y el tiempo de espera configurado.
-  Otros errores de Excel o del navegador pueden detener la ejecución.
-- El archivo se guarda al final del ciclo; no hay guardado por cada pedido.
-- Los resultados anteriores de una fila se reemplazan al reprocesarla.
-- La ruta del archivo y los elementos web requieren revisión al trasladar
-  el flujo a otro equipo o portal.
+Después de corregir los datos y devolver los pedidos al estado `Pendiente`, es posible ejecutar nuevamente el flujo y actualizar sus resultados.
+
+![Pedidos corregidos y registrados](Evidencias/05-pedidos-corregidos.png)
+
+### Tiempo de espera agotado
+
+Si no se obtiene confirmación dentro de 30 segundos, el pedido queda marcado para revisión con la observación correspondiente.
+
+![Pedido marcado para revisión por tiempo de espera](Evidencias/06-tiempo-espera.png)
+
+> La falta de confirmación no demuestra que el pedido haya sido rechazado. Antes de reprocesarlo, corresponde verificar su situación en el portal.
+
+## Preparación y ejecución
+
+### Requisitos
+
+- Equipo Windows con Power Automate Desktop.
+- Microsoft Excel de escritorio.
+- Microsoft Edge configurado para la automatización web.
+- Acceso al portal de demostración utilizado por el flujo.
+- Copia local de los archivos del repositorio.
+
+### Configuración
+
+1. Descarga el repositorio y ubica `Pedidos.xlsx` en tu equipo.
+2. Revisa el archivo de acciones disponible en `Flujo/` para preparar el flujo en Power Automate Desktop.
+3. Ajusta la ruta del archivo Excel y la dirección del portal según tu entorno.
+4. Comprueba los elementos web utilizados por la automatización.
+5. Conserva los nombres y el orden de las columnas del archivo de pedidos.
+6. Coloca el estado `Pendiente` en las filas que deseas procesar.
+7. Ejecuta el flujo y revisa el resumen y los resultados guardados en Excel.
+
+**Para repetir las pruebas:** el archivo mostrado en las evidencias contiene pedidos ya procesados. Revisa sus estados antes de ejecutar el flujo; las filas que no estén en `Pendiente` se omitirán.
+
+## Alcance y consideraciones
+
+- La automatización depende de la estructura del formulario y de los mensajes del portal utilizado.
+- Un cambio en los elementos web puede requerir actualizar los selectores del flujo.
+- El archivo de acciones debe configurarse y verificarse en el entorno de destino; no constituye por sí solo una instalación lista para ejecutar.
+- Los casos marcados como `Revisar` requieren comprobar la observación y corregir o verificar el pedido antes de reprocesarlo.
+- Las capturas documentan pruebas funcionales. No se han cuantificado ahorros de tiempo ni mejoras porcentuales de productividad.
+
+## Aprendizajes del proyecto
+
+El desarrollo me permitió trabajar la integración entre Excel y un formulario web, la validación previa al registro y el tratamiento de distintas respuestas del sistema.
+
+Además de automatizar el ingreso de datos, el proyecto pone énfasis en dejar información útil para el seguimiento: qué pedidos se registraron, cuáles ya existían y cuáles necesitan intervención.
+
+## Posibles mejoras
+
+- Incorporar un historial de ejecuciones independiente del archivo de pedidos.
+- Ampliar las validaciones de campos obligatorios y formatos.
+- Centralizar rutas, tiempos de espera y otros parámetros de configuración.
+- Añadir una consulta de confirmación antes de reintentar operaciones sin respuesta.
+- Medir tiempos de ejecución para comparar el proceso manual con el automatizado.
 
 ## Autor
 
-Juan Manuel Tafur Recuay
+**Juan Manuel Tafur Recuay**  
+[Perfil de GitHub](https://github.com/JuanTF)
